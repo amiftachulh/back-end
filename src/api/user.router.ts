@@ -19,3 +19,7 @@ userRouter.put(
     return res.status(200).send(result);
   }
 );
+
+userRouter.get('/check', authenticate(), async (req: Request, res: Response) => {
+  res.json({ message: 'User is authorized!' });
+});

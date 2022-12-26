@@ -29,10 +29,6 @@ authRouter.post('/register', validate(userCreate), async (req: Request, res: Res
   return res.status(201).send(user);
 });
 
-authRouter.get('/check', authenticate(), async (req: Request, res: Response) => {
-  res.json({ message: 'User is authorized!' });
-});
-
 authRouter.get('/admin', adminAuth(), async (req: Request, res: Response) => {
   res.json({ message: 'You are an admin!' });
 });
