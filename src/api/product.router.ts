@@ -1,32 +1,39 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../db/client';
 import { validate } from './middleware';
-import { productCreate, productUpdate } from '../schema/product.schema';
+import {
+  ProductCreate,
+  productCreate,
+  ProductUpdate,
+  productUpdate,
+} from '../schema/product.schema';
+import {
+  createProduct,
+  deleteProduct,
+  getAllProducts,
+  getProductById,
+  updateProduct,
+} from '../service/product.service';
 
 export const productRouter = Router();
 
 // Get all data
 productRouter.get('/', async (req: Request, res: Response) => {
-  try {
-    const products = await prisma.product.findMany();
-    res.json(products);
-  } catch (error: any) {
-    res.status(500).send(error.message);
+  const products = await getAllProducts();
+  if (!products) {
+    res.sendStatus(400);
   }
+  res.status(201).send(products);
 });
 
 // Get data by ID
 productRouter.get('/:id', async (req: Request, res: Response) => {
-  try {
-    const product = await prisma.product.findUnique({
-      where: {
-        id: req.params.id,
-      },
-    });
-    res.json(product);
-  } catch (error: any) {
-    res.status(500).send(error.message);
+  const params = req.params.id;
+  const product = await getProductById(params);
+  if (!product) {
+    res.sendStatus(400);
   }
+  res.status(201).send(product);
 });
 
 // Create a data
@@ -34,16 +41,12 @@ productRouter.post(
   '/',
   validate(productCreate),
   async (req: Request, res: Response) => {
-    try {
-      const newProduct = await prisma.product.create({
-        data: req.body,
-      });
-      res.json(newProduct);
-    } catch (error: any) {
-      res
-        .status(500)
-        .send({ error: 'An error occured while creating a product' });
+    const payload = req.body as ProductCreate;
+    const product = await createProduct(payload);
+    if (!product) {
+      res.sendStatus(400);
     }
+    res.status(201).send(product);
   }
 );
 
@@ -52,30 +55,22 @@ productRouter.patch(
   '/:id',
   validate(productUpdate),
   async (req: Request, res: Response) => {
-    try {
-      const updatedProduct = await prisma.product.update({
-        where: {
-          id: req.params.id,
-        },
-        data: req.body,
-      });
-      res.json(updatedProduct);
-    } catch (error: any) {
-      res.status(500).send(error.message);
+    const params = req.params.id;
+    const payload = req.body as ProductUpdate;
+    const updatedProduct = await updateProduct(params, payload);
+    if (!updatedProduct) {
+      res.sendStatus(400);
     }
+    res.status(201).send(updatedProduct);
   }
 );
 
 // Delete a data
 productRouter.delete('/:id', async (req: Request, res: Response) => {
-  try {
-    await prisma.product.delete({
-      where: {
-        id: req.params.id,
-      },
-    });
-    res.sendStatus(200);
-  } catch (error: any) {
-    res.status(500).send(error.message);
+  const params = req.params.id;
+  const updatedProduct = await deleteProduct(params);
+  if (!updatedProduct) {
+    res.sendStatus(400);
   }
+  res.status(201).send(updatedProduct);
 });
