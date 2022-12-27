@@ -30,31 +30,41 @@ productRouter.get('/:id', async (req: Request, res: Response) => {
 });
 
 // Create a data
-productRouter.post('/', validate(productCreate), async (req: Request, res: Response) => {
-  try {
-    const newProduct = await prisma.product.create({
-      data: req.body,
-    });
-    res.json(newProduct);
-  } catch (error: any) {
-    res.status(500).send({ error: 'An error occured while creating a product' });
+productRouter.post(
+  '/',
+  validate(productCreate),
+  async (req: Request, res: Response) => {
+    try {
+      const newProduct = await prisma.product.create({
+        data: req.body,
+      });
+      res.json(newProduct);
+    } catch (error: any) {
+      res
+        .status(500)
+        .send({ error: 'An error occured while creating a product' });
+    }
   }
-});
+);
 
 // Update a data
-productRouter.patch('/:id', validate(productUpdate), async (req: Request, res: Response) => {
-  try {
-    const updatedProduct = await prisma.product.update({
-      where: {
-        id: req.params.id,
-      },
-      data: req.body,
-    });
-    res.json(updatedProduct);
-  } catch (error: any) {
-    res.status(500).send(error.message);
+productRouter.patch(
+  '/:id',
+  validate(productUpdate),
+  async (req: Request, res: Response) => {
+    try {
+      const updatedProduct = await prisma.product.update({
+        where: {
+          id: req.params.id,
+        },
+        data: req.body,
+      });
+      res.json(updatedProduct);
+    } catch (error: any) {
+      res.status(500).send(error.message);
+    }
   }
-});
+);
 
 // Delete a data
 productRouter.delete('/:id', async (req: Request, res: Response) => {

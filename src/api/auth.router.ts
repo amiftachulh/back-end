@@ -11,23 +11,31 @@ import { registerUser } from '../service/user.service';
 
 export const authRouter = Router();
 
-authRouter.post('/login', validate(loginSchema), async (req: Request, res: Response) => {
-  const payload = req.body as LoginSchema;
-  const token = await getJwtToken(payload);
-  if (!token) {
-    return res.sendStatus(401);
+authRouter.post(
+  '/login',
+  validate(loginSchema),
+  async (req: Request, res: Response) => {
+    const payload = req.body as LoginSchema;
+    const token = await getJwtToken(payload);
+    if (!token) {
+      return res.sendStatus(401);
+    }
+    return res.send({ token });
   }
-  return res.send({ token });
-});
+);
 
-authRouter.post('/register', validate(userCreate), async (req: Request, res: Response) => {
-  const payload = req.body as UserCreate;
-  const user = await registerUser(payload);
-  if (!user) {
-    return res.sendStatus(400);
+authRouter.post(
+  '/register',
+  validate(userCreate),
+  async (req: Request, res: Response) => {
+    const payload = req.body as UserCreate;
+    const user = await registerUser(payload);
+    if (!user) {
+      return res.sendStatus(400);
+    }
+    return res.status(201).send(user);
   }
-  return res.status(201).send(user);
-});
+);
 
 authRouter.get('/admin', adminAuth(), async (req: Request, res: Response) => {
   res.json({ message: 'You are an admin!' });

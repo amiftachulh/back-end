@@ -4,7 +4,9 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import config from 'config';
 
-export async function getJwtToken(payload: LoginSchema): Promise<string | null> {
+export async function getJwtToken(
+  payload: LoginSchema
+): Promise<string | null> {
   const user = await prisma.user.findUnique({
     where: { username: payload.username },
   });

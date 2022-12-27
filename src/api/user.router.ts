@@ -1,7 +1,13 @@
 import { Router, Request, Response } from 'express';
 import { userUpdate } from '../schema/user.schema';
-import { authenticate, AuthorizedRequest, validate } from './middleware';
+import {
+  authenticate,
+  adminAuth,
+  AuthorizedRequest,
+  validate,
+} from './middleware';
 import { prisma } from '../db/client';
+import { request } from 'http';
 
 export const userRouter = Router();
 
@@ -20,6 +26,21 @@ userRouter.put(
   }
 );
 
-userRouter.get('/check', authenticate(), async (req: Request, res: Response) => {
-  res.json({ message: 'User is authorized!' });
-});
+// check if user is authorized
+userRouter.get(
+  '/check',
+  authenticate(),
+  async (req: Request, res: Response) => {
+    res.json({ message: 'User is authorized!' });
+  }
+);
+
+// check if user is admin
+userRouter.get(
+  '/admin',
+  authenticate(),
+  adminAuth(),
+  async (req: Request, res: Response) => {
+    res.json({ message: 'You are an admin!' });
+  }
+);
