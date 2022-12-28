@@ -9,9 +9,9 @@ export async function getAllProducts(): Promise<any[] | null> {
   return await prisma.product.findMany();
 }
 
-export async function getProductById(params: string): Promise<any | null> {
+export async function getProductById(productId: string): Promise<any | null> {
   return await prisma.product.findUnique({
-    where: { id: params },
+    where: { id: productId },
   });
 }
 
@@ -33,10 +33,10 @@ export async function updateProduct(
   });
 }
 
-export async function deleteProduct(params: string): Promise<any | null> {
+export async function deleteProduct(productId: string): Promise<any | null> {
   return await prisma.product.delete({
     where: {
-      id: params,
+      id: productId,
     },
   });
 }

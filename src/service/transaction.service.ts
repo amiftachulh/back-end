@@ -1,34 +1,15 @@
 import { prisma } from '../db/client';
 
-export async function addToCart(payload: any): Promise<any> {
-  // search if transaction is already in db
-  let transaction = await prisma.transaction.findFirst({
+export async function getAllTransactions(): Promise<any[] | null> {
+  return await prisma.transaction.findMany();
+}
+
+export async function getTransactionById(
+  transactionId: string
+): Promise<any | null> {
+  return await prisma.transaction.findUnique({
     where: {
-      user: { id: payload.userId },
+      id: transactionId,
     },
   });
-
-  if (!transaction) {
-    transaction = await prisma.transaction.create({
-      data: {
-        user: {
-          connect: { id: payload.userId },
-        },
-      },
-    });
-  }
-
-  const addedItem = await prisma.transactionItems.create({
-    data: {
-      transaction: {
-        connect: { id: transaction.id },
-      },
-      product: {
-        connect: { id: payload.productId },
-      },
-      amount: payload.amount,
-    },
-  });
-
-  return addedItem;
 }

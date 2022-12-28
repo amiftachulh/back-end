@@ -1,7 +1,21 @@
 import { Router, Request, Response } from 'express';
-import { authenticate } from './middleware';
+import { userUpdate } from '../schema/user.schema';
+import { authenticate, AuthorizedRequest, validate } from './middleware';
+import { prisma } from '../db/client';
 
 export const userRouter = Router();
 
-// check user or admin
-userRouter.get('/check', authenticate());
+// example update endpoint with payload validation and authentication
+userRouter.put(
+  '/',
+  authenticate(), // only authorized users
+  validate(userUpdate), // validate request body
+  async (req: Request, res: Response) => {
+    const user = (req as AuthorizedRequest).user;
+    const result = await prisma.user.update({
+      where: { id: user.id },
+      data: req.body,
+    });
+    return res.status(200).send(result);
+  }
+);

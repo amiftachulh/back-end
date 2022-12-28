@@ -28,8 +28,8 @@ productRouter.get('/', async (req: Request, res: Response) => {
 
 // Get data by ID
 productRouter.get('/:id', async (req: Request, res: Response) => {
-  const params = req.params.id;
-  const product = await getProductById(params);
+  const id = req.params.id;
+  const product = await getProductById(id);
   if (!product) {
     res.sendStatus(400);
   }
@@ -55,9 +55,9 @@ productRouter.patch(
   '/:id',
   validate(productUpdate),
   async (req: Request, res: Response) => {
-    const params = req.params.id;
+    const id = req.params.id;
     const payload = req.body as ProductUpdate;
-    const updatedProduct = await updateProduct(params, payload);
+    const updatedProduct = await updateProduct(id, payload);
     if (!updatedProduct) {
       res.sendStatus(400);
     }
@@ -67,8 +67,8 @@ productRouter.patch(
 
 // Delete a data
 productRouter.delete('/:id', async (req: Request, res: Response) => {
-  const params = req.params.id;
-  const updatedProduct = await deleteProduct(params);
+  const id = req.params.id;
+  const updatedProduct = await deleteProduct(id);
   if (!updatedProduct) {
     res.sendStatus(400);
   }
