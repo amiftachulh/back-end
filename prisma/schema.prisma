@@ -10,39 +10,40 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
+model user {
   id          String        @id @default(cuid())
   email       String        @unique @db.VarChar(254)
   username    String        @unique @db.VarChar(30)
   password    String
   role        String?
-  Transaction Transaction[]
+  transaction transaction[]
 }
 
-model Product {
-  id               String             @id @default(cuid())
-  name             String             @unique @db.VarChar(60)
-  description      String             @db.VarChar(500)
-  stock            Int
-  sku              String             @unique @db.VarChar(12)
-  price            Int
-  TransactionItems TransactionItems[]
+model product {
+  id                String              @id @default(cuid())
+  name              String              @unique @db.VarChar(60)
+  description       String              @db.VarChar(500)
+  stock             Int
+  sku               String              @unique @db.VarChar(12)
+  price             Int
+  transaction_items transaction_items[]
 }
 
-model Transaction {
-  id               String             @id @default(cuid())
-  user             User               @relation(fields: [user_id], references: [id])
-  user_id          String
-  status           String             @default("Unpaid")
-  created_at       DateTime?
-  TransactionItems TransactionItems[]
+model transaction {
+  id                String              @id @default(cuid())
+  user              user                @relation(fields: [user_id], references: [id])
+  user_id           String
+  status            String              @default("Unpaid")
+  created_at        DateTime?
+  transaction_items transaction_items[]
 }
 
-model TransactionItems {
+model transaction_items {
   id             String      @id @default(cuid())
-  product        Product     @relation(fields: [product_id], references: [id])
+  product        product     @relation(fields: [product_id], references: [id])
   product_id     String
-  transaction    Transaction @relation(fields: [transaction_id], references: [id])
+  transaction    transaction @relation(fields: [transaction_id], references: [id])
   transaction_id String
   amount         Int
+  subtotal       Int
 }
