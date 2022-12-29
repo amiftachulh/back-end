@@ -21,9 +21,9 @@ export const productRouter = Router();
 productRouter.get('/', async (req: Request, res: Response) => {
   const products = await getAllProducts();
   if (!products) {
-    res.sendStatus(400);
+    return res.status(400);
   }
-  res.status(201).send(products);
+  return res.status(201).send(products);
 });
 
 // Get data by ID
@@ -31,9 +31,9 @@ productRouter.get('/:id', async (req: Request, res: Response) => {
   const id = req.params.id;
   const product = await getProductById(id);
   if (!product) {
-    res.sendStatus(400);
+    return res.status(400);
   }
-  res.status(201).send(product);
+  return res.status(201).send(product);
 });
 
 // Create a data
@@ -44,9 +44,9 @@ productRouter.post(
     const payload = req.body as ProductCreate;
     const product = await createProduct(payload);
     if (!product) {
-      res.sendStatus(400);
+      return res.status(400);
     }
-    res.status(201).send(product);
+    return res.status(201).send(product);
   }
 );
 
@@ -59,9 +59,9 @@ productRouter.patch(
     const payload = req.body as ProductUpdate;
     const updatedProduct = await updateProduct(id, payload);
     if (!updatedProduct) {
-      res.sendStatus(400);
+      return res.status(400);
     }
-    res.status(201).send(updatedProduct);
+    return res.status(201).send(updatedProduct);
   }
 );
 
@@ -70,7 +70,7 @@ productRouter.delete('/:id', async (req: Request, res: Response) => {
   const id = req.params.id;
   const updatedProduct = await deleteProduct(id);
   if (!updatedProduct) {
-    res.sendStatus(400);
+    return res.status(400);
   }
-  res.status(201).send(updatedProduct);
+  return res.status(201).send(updatedProduct);
 });
