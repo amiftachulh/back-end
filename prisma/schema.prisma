@@ -34,6 +34,7 @@ model transaction {
   user              user                @relation(fields: [user_id], references: [id])
   user_id           String
   status            String              @default("Unpaid")
+  total             Int                 @default(0)
   created_at        DateTime?
   transaction_items transaction_items[]
 }
@@ -45,5 +46,5 @@ model transaction_items {
   transaction    transaction @relation(fields: [transaction_id], references: [id])
   transaction_id String
   amount         Int
-  subtotal       Int
+  subtotal       Int         @default(0)
 }

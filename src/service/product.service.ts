@@ -1,9 +1,9 @@
-import { prisma } from '../db/client';
+import { prisma } from "../db/client";
 import {
   ProductCreate,
   ProductReturn,
   ProductUpdate,
-} from '../schema/product.schema';
+} from "../schema/product.schema";
 
 export async function getAllProducts(): Promise<any[] | null> {
   return await prisma.product.findMany();
@@ -11,7 +11,9 @@ export async function getAllProducts(): Promise<any[] | null> {
 
 export async function getProductById(productId: string): Promise<any | null> {
   return await prisma.product.findUnique({
-    where: { id: productId },
+    where: {
+      id: productId,
+    },
   });
 }
 
@@ -28,7 +30,9 @@ export async function updateProduct(
   payload: ProductUpdate
 ): Promise<ProductReturn | null> {
   return await prisma.product.update({
-    where: { id: params },
+    where: {
+      id: params,
+    },
     data: payload,
   });
 }

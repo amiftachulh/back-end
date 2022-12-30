@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import config from 'config';
 import { prisma } from '../db/client';
 import { jwtPayloadSchema } from '../schema/auth.schema';
-import { User } from '@prisma/client';
+import { user } from '@prisma/client';
 
 export const validate =
   (schema: AnyZodObject) =>
@@ -75,4 +75,4 @@ export const authenticate =
   };
 
 // augment the req object with the request's sender as User
-export type AuthorizedRequest = Request & { user: User };
+export type AuthorizedRequest = Request & { user: user };

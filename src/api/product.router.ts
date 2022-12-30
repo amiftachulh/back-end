@@ -68,9 +68,9 @@ productRouter.patch(
 // Delete a data
 productRouter.delete('/:id', async (req: Request, res: Response) => {
   const id = req.params.id;
-  const updatedProduct = await deleteProduct(id);
-  if (!updatedProduct) {
+  const deletedProduct = await deleteProduct(id);
+  if (!deletedProduct) {
     return res.status(400);
   }
-  return res.status(201).send(updatedProduct);
+  return res.status(201).send(deletedProduct);
 });
