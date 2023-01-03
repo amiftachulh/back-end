@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import config from 'config';
-import { authenticate, AuthorizedRequest, validate } from './middleware';
+import { verifyJwt, AuthorizedRequest, validate } from './middleware';
 import { LoginSchema, loginSchema } from '../schema/auth.schema';
 import { prisma } from '../db/client';
 import bcrypt from 'bcrypt';
@@ -37,4 +37,4 @@ authRouter.post(
   }
 );
 
-authRouter.get('/', authenticate());
+authRouter.get('/', verifyJwt());

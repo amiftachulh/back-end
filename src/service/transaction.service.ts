@@ -1,5 +1,55 @@
 import { prisma } from '../db/client';
 
+async function updateTotal(transactionId: string): Promise<any | null> {
+  // find transaction to update the total
+  const items = await prisma.transaction_items.findMany({
+    where: {
+      transaction_id: transactionId,
+    },
+  });
+
+  // calculate new total
+  const total = items.reduce((acc, item) => acc + item.subtotal, 0);
+
+  // update total
+  const updatedTransaction = await prisma.transaction.update({
+    where: {
+      id: transactionId,
+    },
+    data: {
+      total: total,
+    },
+  });
+
+  return updatedTransaction;
+}
+
+async function updateSubtotal(itemId: string): Promise<any | null> {
+  // find item to update the subtotal
+  const item = await prisma.transaction_items.findFirst({
+    where: {
+      id: itemId,
+    },
+    select: {
+      id: true,
+      amount: true,
+      product: true,
+    },
+  });
+
+  // update the item subtotal
+  const updatedItem = await prisma.transaction_items.update({
+    where: {
+      id: item?.id,
+    },
+    data: {
+      subtotal: item!.amount * item!.product.price,
+    },
+  });
+
+  return updateTotal(updatedItem.transaction_id);
+}
+
 export async function addToCart(payload: any): Promise<any | null> {
   // search if transaction is already in db
   let transaction = await prisma.transaction.findFirst({
@@ -64,7 +114,7 @@ export async function addToCart(payload: any): Promise<any | null> {
   });
 
   // return
-  return await prisma.transaction_items.update({
+  const updatedItem = await prisma.transaction_items.update({
     where: {
       id: addedItem!.id,
     },
@@ -72,6 +122,8 @@ export async function addToCart(payload: any): Promise<any | null> {
       subtotal: addedItem!.amount * addedItem!.product.price,
     },
   });
+
+  return updateTotal(transaction.id);
 }
 
 export async function getAllTransactions(
@@ -82,7 +134,11 @@ export async function getAllTransactions(
       user_id: userId,
     },
     include: {
-      transaction_items: true,
+      transaction_items: {
+        include: {
+          product: true,
+        },
+      },
     },
   });
 }
@@ -91,32 +147,38 @@ export async function getCurrentTransaction(
   userId: string
 ): Promise<any | null> {
   // search if current transaction is available
-  const currentTransaction = await prisma.transaction.findFirst({
+  return await prisma.transaction.findFirst({
     where: {
       user_id: userId,
       status: 'Unpaid',
     },
+    include: {
+      transaction_items: {
+        include: {
+          product: true,
+        },
+      },
+    },
+  });
+}
+
+export async function checkItemStock(itemId: string): Promise<any | null> {
+  const item = await prisma.transaction_items.findFirst({
+    where: {
+      id: itemId,
+    },
   });
 
-  if (!currentTransaction) {
-    return null;
-  }
-
-  const transactionId = currentTransaction?.id;
-
-  // return transaction items
-  return await prisma.transaction_items.findMany({
+  const product = await prisma.product.findFirst({
     where: {
-      transaction_id: transactionId,
+      id: item?.product_id,
     },
     select: {
-      id: true,
-      amount: true,
-      subtotal: true,
-      transaction: true,
-      product: true,
+      stock: true,
     },
   });
+
+  return product?.stock;
 }
 
 export async function increaseItem(itemId: string): Promise<any | null> {
@@ -130,7 +192,7 @@ export async function increaseItem(itemId: string): Promise<any | null> {
     return null;
   }
 
-  return await prisma.transaction_items.update({
+  const updatedItem = await prisma.transaction_items.update({
     where: {
       id: itemId,
     },
@@ -138,6 +200,8 @@ export async function increaseItem(itemId: string): Promise<any | null> {
       amount: item.amount + 1,
     },
   });
+
+  return updateSubtotal(itemId);
 }
 
 export async function decreaseItem(itemId: string): Promise<any | null> {
@@ -151,12 +215,34 @@ export async function decreaseItem(itemId: string): Promise<any | null> {
     return null;
   }
 
-  return await prisma.transaction_items.update({
+  const updatedItem = await prisma.transaction_items.update({
     where: {
       id: itemId,
     },
     data: {
       amount: item.amount - 1,
+    },
+  });
+
+  return updateSubtotal(itemId);
+}
+
+export async function updateItem(
+  itemId: string,
+  amount: number
+): Promise<any | null> {
+  const item = await prisma.transaction_items.findFirst({
+    where: {
+      id: itemId,
+    },
+  });
+
+  return await prisma.transaction_items.update({
+    where: {
+      id: item?.id,
+    },
+    data: {
+      amount: amount,
     },
   });
 }
@@ -169,4 +255,79 @@ export async function removeTransactionItem(
       id: itemId,
     },
   });
+}
+
+export async function checkOut(
+  transactionId: string,
+  transactionItems: string
+): Promise<any | null> {
+  const items = await prisma.transaction_items.findMany({
+    where: {
+      transaction: {
+        id: transactionId,
+      },
+    },
+  });
+
+  items.forEach(
+    async (item) =>
+      await prisma.$queryRaw`UPDATE product SET stock = (stock - ${item.amount}) WHERE id = ${item.product_id}`
+  );
+
+  const currentTime = new Date();
+  const dateTime = currentTime.toISOString();
+
+  const updatedTransaction = await prisma.transaction.update({
+    where: {
+      id: transactionId,
+    },
+    data: {
+      status: 'Paid',
+      created_at: dateTime,
+    },
+  });
+
+  createHistory(updatedTransaction, transactionItems);
+
+  return updatedTransaction;
+}
+
+async function createHistory(
+  transaction: any,
+  items: string
+): Promise<any | null> {
+  return await prisma.transaction_history.create({
+    data: {
+      user: {
+        connect: {
+          id: transaction.user_id,
+        },
+      },
+      status: transaction.status,
+      total: transaction.total,
+      transaction_items: items,
+      created_at: transaction.created_at,
+    },
+  });
+}
+
+export async function getHistory(userId: string): Promise<any | null> {
+  const history = await prisma.transaction_history.findMany({
+    where: {
+      user_id: userId,
+    },
+  });
+
+  const sendHistory = history.map((h) => {
+    return {
+      id: h.id,
+      user_id: h.user_id,
+      status: h.status,
+      total: h.total,
+      transaction_items: JSON.parse(h.transaction_items),
+      created_at: h.created_at,
+    };
+  });
+
+  return sendHistory;
 }

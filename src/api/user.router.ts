@@ -1,14 +1,14 @@
-import { Router, Request, Response } from "express";
-import { userUpdate } from "../schema/user.schema";
-import { authenticate, AuthorizedRequest, validate } from "./middleware";
-import { prisma } from "../db/client";
+import { Router, Request, Response } from 'express';
+import { userUpdate } from '../schema/user.schema';
+import { AuthorizedRequest, validate, verifyJwt } from './middleware';
+import { prisma } from '../db/client';
 
 export const userRouter = Router();
 
 // example update endpoint with payload validation and authentication
 userRouter.put(
-  "/",
-  authenticate(), // only authorized users
+  '/',
+  verifyJwt(), // only authorized users
   validate(userUpdate), // validate request body
   async (req: Request, res: Response) => {
     const user = (req as AuthorizedRequest).user;

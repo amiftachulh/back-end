@@ -1,6 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { prisma } from '../db/client';
-import { validate } from './middleware';
+import { authenticate, validate } from './middleware';
 import {
   ProductCreate,
   productCreate,
@@ -39,6 +38,7 @@ productRouter.get('/:id', async (req: Request, res: Response) => {
 // Create a data
 productRouter.post(
   '/',
+  authenticate(),
   validate(productCreate),
   async (req: Request, res: Response) => {
     const payload = req.body as ProductCreate;
@@ -53,6 +53,7 @@ productRouter.post(
 // Update a data
 productRouter.patch(
   '/:id',
+  authenticate(),
   validate(productUpdate),
   async (req: Request, res: Response) => {
     const id = req.params.id;
@@ -66,11 +67,15 @@ productRouter.patch(
 );
 
 // Delete a data
-productRouter.delete('/:id', async (req: Request, res: Response) => {
-  const id = req.params.id;
-  const deletedProduct = await deleteProduct(id);
-  if (!deletedProduct) {
-    return res.status(400);
+productRouter.delete(
+  '/:id',
+  authenticate(),
+  async (req: Request, res: Response) => {
+    const id = req.params.id;
+    const deletedProduct = await deleteProduct(id);
+    if (!deletedProduct) {
+      return res.status(400);
+    }
+    return res.status(201).send(deletedProduct);
   }
-  return res.status(201).send(deletedProduct);
-});
+);

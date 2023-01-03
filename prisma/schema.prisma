@@ -11,12 +11,13 @@ datasource db {
 }
 
 model user {
-  id          String        @id @default(cuid())
-  email       String        @unique @db.VarChar(254)
-  username    String        @unique @db.VarChar(30)
-  password    String
-  role        String?
-  transaction transaction[]
+  id                  String                @id @default(cuid())
+  email               String                @unique @db.VarChar(254)
+  username            String                @unique @db.VarChar(30)
+  password            String
+  role                String?
+  transaction         transaction[]
+  transaction_history transaction_history[]
 }
 
 model product {
@@ -31,7 +32,7 @@ model product {
 
 model transaction {
   id                String              @id @default(cuid())
-  user              user                @relation(fields: [user_id], references: [id])
+  user              user                @relation(fields: [user_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
   user_id           String
   status            String              @default("Unpaid")
   total             Int                 @default(0)
@@ -41,10 +42,20 @@ model transaction {
 
 model transaction_items {
   id             String      @id @default(cuid())
-  product        product     @relation(fields: [product_id], references: [id])
+  product        product     @relation(fields: [product_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
   product_id     String
-  transaction    transaction @relation(fields: [transaction_id], references: [id])
+  transaction    transaction @relation(fields: [transaction_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
   transaction_id String
   amount         Int
   subtotal       Int         @default(0)
+}
+
+model transaction_history {
+  id                String   @id @default(cuid())
+  user              user     @relation(fields: [user_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  user_id           String
+  status            String
+  total             Int
+  transaction_items String   @db.VarChar(1000)
+  created_at        DateTime
 }

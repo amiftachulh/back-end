@@ -6,75 +6,126 @@ import {
   increaseItem,
   decreaseItem,
   removeTransactionItem,
+  checkItemStock,
+  checkOut,
+  getHistory,
 } from '../service/transaction.service';
-import { authenticate } from './middleware';
+import { itemAmount } from '../schema/transaction.shcema';
+import { authenticate, validate } from './middleware';
 
 export const transactionRouter = Router();
 
-// get all transactions by id and its content
-transactionRouter.get('/all/:userId', async (req: Request, res: Response) => {
-  const userId = req.params.userId;
-  const transactions = await getAllTransactions(userId);
-  if (!transactions) {
-    return res.send(400);
+// get current transaction by user id and its content
+transactionRouter.get(
+  '/item/:userId',
+  authenticate(),
+  async (req: Request, res: Response) => {
+    const userId = req.params.userId;
+    const currentTransaction = await getCurrentTransaction(userId);
+    if (!currentTransaction) {
+      return res.status(404).send('There are no current transaction!');
+    }
+    return res.status(201).send(currentTransaction);
   }
-  return res.status(201).send(transactions);
-});
-
-// get current transaction by id and its content
-transactionRouter.get('/item/:userId', async (req: Request, res: Response) => {
-  const userId = req.params.userId;
-  const currentTransaction = await getCurrentTransaction(userId);
-  if (!currentTransaction) {
-    return res.status(404).send('There are no current transaction!');
-  }
-  return res.status(201).send(currentTransaction);
-});
+);
 
 // add item to cart
-transactionRouter.post('/', async (req: Request, res: Response) => {
-  const payload = req.body;
-  const transaction = await addToCart(payload);
-  if (!transaction) {
-    return res.status(409).send('Item is already in the cart!');
+transactionRouter.post(
+  '/',
+  authenticate(),
+  validate(itemAmount),
+  async (req: Request, res: Response) => {
+    const payload = req.body;
+    const transaction = await addToCart(payload);
+    if (!transaction) {
+      return res.status(409).send('Item is already in the cart!');
+    }
+    return res.status(201).send('Success');
   }
-  return res.status(201).send(transaction);
-});
+);
 
 // edit item amount
 transactionRouter.patch(
   '/item-increase/:itemId',
+  authenticate(),
   async (req: Request, res: Response) => {
     const itemId = req.params.itemId;
+    const amount = req.body.amount;
+    const currentStock = await checkItemStock(itemId);
+    if (amount >= currentStock) {
+      return res.status(400).send({
+        stock: currentStock,
+        message: 'Must not exceed the stock quantity!',
+      });
+    }
     const updatedItem = await increaseItem(itemId);
     if (!updatedItem) {
       return res.status(400);
     }
-    return res.status(201).send(updatedItem);
+    return res.status(201).send('Item increased');
   }
 );
 
 transactionRouter.patch(
   '/item-decrease/:itemId',
+  authenticate(),
   async (req: Request, res: Response) => {
     const itemId = req.params.itemId;
+    const amount = req.body.amount;
+    if (amount <= 1) {
+      return res
+        .status(400)
+        .send(
+          'You cannot decrease the item to 0, please use the trash button!'
+        );
+    }
     const updatedItem = await decreaseItem(itemId);
     if (!updatedItem) {
       return res.status(400);
     }
-    return res.status(201).send(updatedItem);
+    return res.status(201).send('Increase decreased');
   }
 );
 
 // delete item from cart
 transactionRouter.delete(
-  'item/:itemId',
+  '/item/:itemId',
+  authenticate(),
   async (req: Request, res: Response) => {
     const itemId = req.params.itemId;
     const deletedItem = await removeTransactionItem(itemId);
     if (!deletedItem) {
       return res.status(400);
     }
-    return res.status(201).send(deletedItem);
+    return res.status(201).send('Item deleted');
+  }
+);
+
+// checkout
+transactionRouter.patch(
+  '/checkout/:id',
+  authenticate(),
+  async (req: Request, res: Response) => {
+    const transactionId = req.params.id;
+    const transactionItems = req.body.transactionItems;
+    const payload = await checkOut(transactionId, transactionItems);
+    if (!payload) {
+      return res.status(400);
+    }
+    return res.status(201).send('Success');
+  }
+);
+
+// get history
+transactionRouter.get(
+  '/history/:id',
+  authenticate(),
+  async (req: Request, res: Response) => {
+    const userId = req.params.id;
+    const payload = await getHistory(userId);
+    if (!payload) {
+      return res.status(404).send('There are no transaction!');
+    }
+    return res.status(201).send(payload);
   }
 );
