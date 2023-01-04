@@ -126,19 +126,38 @@ export async function addToCart(payload: any): Promise<any | null> {
   return updateTotal(transaction.id);
 }
 
-export async function getAllTransactions(
-  userId: string
-): Promise<any[] | null> {
+export async function getAllTransactions(): Promise<any[] | null> {
   return prisma.transaction.findMany({
-    where: {
-      user_id: userId,
-    },
     include: {
-      transaction_items: {
-        include: {
-          product: true,
-        },
-      },
+      user: true,
+    },
+  });
+}
+
+export async function statusUnpaid(transactionId: string): Promise<any | null> {
+  return changeTransactionStatus(transactionId, 'Unpaid');
+}
+
+export async function statusWaiting(
+  transactionId: string
+): Promise<any | null> {
+  return changeTransactionStatus(transactionId, 'Waiting');
+}
+
+export async function statusPaid(transactionId: string): Promise<any | null> {
+  return changeTransactionStatus(transactionId, 'Paid');
+}
+
+async function changeTransactionStatus(
+  transactionId: string,
+  status: string
+): Promise<any | null> {
+  return await prisma.transaction.update({
+    where: {
+      id: transactionId,
+    },
+    data: {
+      status: status,
     },
   });
 }
@@ -227,34 +246,18 @@ export async function decreaseItem(itemId: string): Promise<any | null> {
   return updateSubtotal(itemId);
 }
 
-export async function updateItem(
-  itemId: string,
-  amount: number
-): Promise<any | null> {
-  const item = await prisma.transaction_items.findFirst({
-    where: {
-      id: itemId,
-    },
-  });
-
-  return await prisma.transaction_items.update({
-    where: {
-      id: item?.id,
-    },
-    data: {
-      amount: amount,
-    },
-  });
-}
-
 export async function removeTransactionItem(
   itemId: string
 ): Promise<any | null> {
-  return await prisma.transaction_items.delete({
+  const item = await prisma.transaction_items.delete({
     where: {
       id: itemId,
     },
   });
+
+  updateTotal(item.transaction_id);
+
+  return item;
 }
 
 export async function checkOut(
@@ -282,7 +285,7 @@ export async function checkOut(
       id: transactionId,
     },
     data: {
-      status: 'Paid',
+      status: 'Waiting',
       created_at: dateTime,
     },
   });

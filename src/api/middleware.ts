@@ -22,7 +22,7 @@ export const verifyJwt = () => async (req: Request, res: Response) => {
     // extract token from header
     const header = req.header('Authorization');
     if (!header) {
-      return res.status(401).send('No authorization header found'!);
+      return res.status(401).send('No authorization header found!');
     }
 
     const token = header.replace('Bearer ', '');
@@ -72,7 +72,7 @@ export const authenticate =
       // extract token from header
       const header = req.header('Authorization');
       if (!header) {
-        return res.status(401).send('No authorization header found'!);
+        return res.status(401).send('No authorization header found!');
       }
 
       const token = header.replace('Bearer ', '');

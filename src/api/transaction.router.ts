@@ -9,11 +9,67 @@ import {
   checkItemStock,
   checkOut,
   getHistory,
+  statusUnpaid,
+  statusWaiting,
+  statusPaid,
 } from '../service/transaction.service';
 import { itemAmount } from '../schema/transaction.shcema';
 import { authenticate, validate } from './middleware';
 
 export const transactionRouter = Router();
+
+// get all transaction
+transactionRouter.get(
+  '/',
+  // authenticate(),
+  async (req: Request, res: Response) => {
+    const payload = await getAllTransactions();
+    if (!payload) {
+      return res.status(404).send('There are no transactions!');
+    }
+    return res.status(201).send(payload);
+  }
+);
+
+// set status of transaction by id
+transactionRouter.post(
+  '/unpaid/:id',
+  authenticate(),
+  async (req: Request, res: Response) => {
+    const transactionId = req.params.id;
+    const payload = await statusUnpaid(transactionId);
+    if (!payload) {
+      return res.status(404);
+    }
+    return res.status(201).send('Success');
+  }
+);
+
+transactionRouter.post(
+  '/waiting/:id',
+  authenticate(),
+  async (req: Request, res: Response) => {
+    const transactionId = req.params.id;
+    const payload = await statusWaiting(transactionId);
+    if (!payload) {
+      return res.status(404);
+    }
+    return res.status(201).send('Success');
+  }
+);
+
+transactionRouter.post(
+  '/paid/:id',
+  authenticate(),
+  async (req: Request, res: Response) => {
+    const transactionId = req.params.id;
+    const payload = await statusPaid(transactionId);
+    if (!payload) {
+      return res.status(404);
+    }
+    return res.status(201).send('Success');
+  }
+);
 
 // get current transaction by user id and its content
 transactionRouter.get(
