@@ -12,6 +12,7 @@ import {
   statusUnpaid,
   statusWaiting,
   statusPaid,
+  getWaitingTransaction,
 } from '../service/transaction.service';
 import { itemAmount } from '../schema/transaction.shcema';
 import { authenticate, validate } from './middleware';
@@ -45,6 +46,19 @@ transactionRouter.post(
   }
 );
 
+transactionRouter.get(
+  '/waiting/:id',
+  authenticate(),
+  async (req: Request, res: Response) => {
+    const transactionId = req.params.id;
+    const payload = await getWaitingTransaction(transactionId);
+    if (!payload) {
+      return res.status(404);
+    }
+    return res.status(201).send(payload);
+  }
+);
+
 transactionRouter.post(
   '/waiting/:id',
   authenticate(),
@@ -63,7 +77,8 @@ transactionRouter.post(
   authenticate(),
   async (req: Request, res: Response) => {
     const transactionId = req.params.id;
-    const payload = await statusPaid(transactionId);
+    const transactionItems = req.body.transactionItems;
+    const payload = await statusPaid(transactionId, transactionItems);
     if (!payload) {
       return res.status(404);
     }
@@ -163,8 +178,7 @@ transactionRouter.patch(
   authenticate(),
   async (req: Request, res: Response) => {
     const transactionId = req.params.id;
-    const transactionItems = req.body.transactionItems;
-    const payload = await checkOut(transactionId, transactionItems);
+    const payload = await checkOut(transactionId);
     if (!payload) {
       return res.status(400);
     }

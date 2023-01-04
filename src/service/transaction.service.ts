@@ -138,14 +138,28 @@ export async function statusUnpaid(transactionId: string): Promise<any | null> {
   return changeTransactionStatus(transactionId, 'Unpaid');
 }
 
+export async function getWaitingTransaction(
+  transactionId: string
+): Promise<any | null> {
+  return await prisma.transaction.findMany({
+    where: {
+      status: 'Waiting',
+    },
+  });
+}
+
 export async function statusWaiting(
   transactionId: string
 ): Promise<any | null> {
   return changeTransactionStatus(transactionId, 'Waiting');
 }
 
-export async function statusPaid(transactionId: string): Promise<any | null> {
-  return changeTransactionStatus(transactionId, 'Paid');
+export async function statusPaid(
+  transactionId: string,
+  transactionItems: string
+): Promise<any | null> {
+  changeTransactionStatus(transactionId, 'Paid');
+  return createHistory(transactionId, transactionItems);
 }
 
 async function changeTransactionStatus(
@@ -260,10 +274,7 @@ export async function removeTransactionItem(
   return item;
 }
 
-export async function checkOut(
-  transactionId: string,
-  transactionItems: string
-): Promise<any | null> {
+export async function checkOut(transactionId: string): Promise<any | null> {
   const items = await prisma.transaction_items.findMany({
     where: {
       transaction: {
@@ -289,8 +300,6 @@ export async function checkOut(
       created_at: dateTime,
     },
   });
-
-  createHistory(updatedTransaction, transactionItems);
 
   return updatedTransaction;
 }
